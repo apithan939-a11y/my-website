@@ -381,3 +381,176 @@ uploadImages.addEventListener("change", function() {
   this.value = "";
 });
 </script>
+
+<style>
+#gem-game {
+  max-width: 650px;
+  margin: 25px auto;
+  padding: 18px;
+  border-radius: 18px;
+  background: #171b2b;
+  color: white;
+  font-family: sans-serif;
+  text-align: center;
+}
+#gem-game h2 { color: #9ee7ff; }
+.gem-wheel {
+  width: 230px;
+  height: 230px;
+  margin: 20px auto;
+  border-radius: 50%;
+  border: 7px solid #b9c8e8;
+  background: conic-gradient(
+    #b7e6ff 0deg 90deg,
+    #a77bdb 90deg 180deg,
+    #397acb 180deg 270deg,
+    #e34b67 270deg 360deg
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 25px #6ba9ff66;
+  transition: transform 4s cubic-bezier(.12,.7,.12,1);
+}
+.gem-wheel span {
+  background: #171b2b;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 38px;
+}
+#gem-game button {
+  border: 0;
+  border-radius: 12px;
+  padding: 13px 25px;
+  background: #4b9fff;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+#gem-game button:disabled { opacity: .5; }
+#gem-result {
+  margin: 18px 0;
+  padding: 15px;
+  border-radius: 12px;
+  background: #282f47;
+  min-height: 65px;
+}
+.gem-list {
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 10px;
+  margin-top: 15px;
+}
+.gem-card {
+  background: #282f47;
+  border-radius: 12px;
+  padding: 12px;
+}
+.gem-card small { color: #b9c7e5; }
+#gem-game .common { color: #b7e6ff; }
+#gem-game .rare { color: #b99cff; }
+#gem-game .epic { color: #62aaff; }
+#gem-game .legend { color: #ff8297; }
+@media(max-width:400px) {
+  .gem-wheel { width:190px;height:190px; }
+}
+</style>
+
+<div id="gem-game">
+  <h2>💎 GEM COLLECTION</h2>
+  <p>เกมกากๆ</p>
+
+  <div class="gem-wheel" id="gemWheel">
+    <span>💎</span>
+  </div>
+
+  <button id="gemSpin">🎰 หมุนสุ่มอัญมณี</button>
+
+  <div id="gem-result">
+    พร้อมแล้ว! กดหมุนเพื่อรับอัญมณี
+  </div>
+
+  <h3>📦 คลังสะสมของคุณ</h3>
+  <p>พบอัญมณีแล้ว <b id="gemCount">0</b> ครั้ง</p>
+  <div class="gem-list" id="gemInventory"></div>
+</div>
+
+<script>
+(() => {
+  const gems = [
+    {name:"ควอตซ์", en:"Quartz", icon:"🤍", chance:39, rarity:"common", percent:"39%"},
+    {name:"อเมทิสต์", en:"Amethyst", icon:"💜", chance:30, rarity:"common", percent:"30%"},
+    {name:"โทแพซ", en:"Topaz", icon:"💛", chance:20, rarity:"rare", percent:"20%"},
+    {name:"ไพลิน", en:"Sapphire", icon:"💙", chance:10, rarity:"epic", percent:"10%"},
+    {name:"ทับทิมตำนาน", en:"Legendary Ruby", icon:"❤️", chance:1, rarity:"legend", percent:"1%"}
+  ];
+
+  let inventory = {};
+  let total = 0;
+  let rotation = 0;
+  let spinning = false;
+
+  const wheel = document.getElementById("gemWheel");
+  const button = document.getElementById("gemSpin");
+  const result = document.getElementById("gem-result");
+
+  function drawInventory() {
+    document.getElementById("gemCount").textContent = total;
+    document.getElementById("gemInventory").innerHTML =
+      gems.map(g => `
+        <div class="gem-card">
+          <div style="font-size:30px">${g.icon}</div>
+          <b>${g.name}</b><br>
+          <small>${g.percent} โอกาสได้รับ</small><br>
+          <small>มี ${inventory[g.name] || 0} ชิ้น</small>
+        </div>
+      `).join("");
+  }
+
+  function pickGem() {
+    const random = Math.random() * 100;
+    let sum = 0;
+    for (const gem of gems) {
+      sum += gem.chance;
+      if (random < sum) return gem;
+    }
+    return gems[0];
+  }
+
+  button.addEventListener("click", () => {
+    if (spinning) return;
+
+    spinning = true;
+    button.disabled = true;
+    result.textContent = "🔄 กำลังหมุนวงล้อ...";
+
+    const gem = pickGem();
+
+    rotation += 1800 + Math.random() * 720;
+    wheel.style.transform = `rotate(${rotation}deg)`;
+
+    setTimeout(() => {
+      inventory[gem.name] = (inventory[gem.name] || 0) + 1;
+      total++;
+
+      result.innerHTML = `
+        <div style="font-size:40px">${gem.icon}</div>
+        <h3 class="${gem.rarity}">ได้รับ ${gem.name}!</h3>
+        <p>${gem.en}</p>
+        <p>โอกาสได้รับ: <b>${gem.percent}</b></p>
+        <p>ระดับความหายาก: ${gem.rarity.toUpperCase()}</p>
+      `;
+
+      drawInventory();
+      spinning = false;
+      button.disabled = false;
+    }, 4100);
+  });
+
+  drawInventory();
+})();
+</script>
